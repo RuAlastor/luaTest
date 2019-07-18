@@ -2,6 +2,9 @@
 #define SCRIPTER_H
 
 #include <iostream>
+#include <cstring>
+#include <string>
+#include <unordered_map>
 
 extern "C" {
     #include <lua.h>
@@ -11,6 +14,13 @@ extern "C" {
 
 
 namespace Sorokin {
+
+    struct user {
+        std::string _id;
+        std::string _fname;
+        std::string _lname;
+        std::string _job;
+    };
 
     class Scripter {
 
@@ -24,8 +34,8 @@ namespace Sorokin {
         int runScript() noexcept;
 
         /* Run specific function from script file */
-        int modifyCharArray(const std::string& toModify, std::string& modified) noexcept(false);
-        int sumTwo(int& x, int& y, int& answer) noexcept(false);
+        int getUser(const char* lname, user& answer) noexcept(false);
+        int getMaps(std::unordered_multimap<std::string, std::string>& answer) noexcept(false);
 
         /* Close Scripter */
         ~Scripter() noexcept;
@@ -38,6 +48,9 @@ namespace Sorokin {
         Scripter& operator =(const Scripter& other) = delete;
         Scripter& operator =(Scripter&& other) = delete;
 
+        int findValueFromTable(std::unordered_multimap<std::string, std::string>& answer) noexcept(false);
+        std::string getKey() noexcept;
+        std::string getStringValue() noexcept;
     };
 
 }
