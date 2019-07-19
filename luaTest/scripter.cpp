@@ -6,12 +6,12 @@ using namespace Sorokin;
 /* Methods setting the Scripter obj up */
 Scripter::Scripter() noexcept(false) {
     _script = luaL_newstate();
-    if (_script == NULL) { // Error if unable to allocate memory
-        std::cout << "Out of memory!\n";
-        throw 0;
+    if (_script == NULL) {
+        throw std::bad_alloc();
     }
 }
 int Scripter::setScriptFile(const char *scriptFileName) noexcept {
+    lua_settop(_script, 0);
     if (luaL_loadfile(_script, scriptFileName) != LUA_OK) {
         std::cout << "Failed to load file!\n";
         return -1;
@@ -28,28 +28,6 @@ int Scripter::runScript() noexcept {
 }
 
 /* Running specific functions of script file */
-/* Example
-int Scripter::modifyCharArray(const std::string &toModify, std::string &modified) noexcept(false) {
-    const char* luaFuncName = "reverse";
-
-    lua_getglobal(_script, luaFuncName);
-    if (lua_pushstring(_script, toModify.c_str()) == NULL) { // Possible error
-        std::cout << "Failed to push to stack!\n";
-        return -1;
-    }
-    if (lua_pcall(_script, 1, 1, 0) != LUA_OK) { // Possible error
-        const char* luaError = lua_tostring(_script, -1);
-        std::cout << "Failed to run script!\n" << luaError << '\n';
-        return -1;
-    }
-
-    modified.clear();
-    modified = lua_tostring(_script, -1);
-    lua_pop(_script, 1);
-
-    return 0;
-}
-*/
 int Scripter::getUser(const char *lname, user &answer) noexcept(false) {
     const char* functionName = "getUser";
 
@@ -99,15 +77,13 @@ int Scripter::getUser(const char *lname, user &answer) noexcept(false) {
 }
 int Scripter::getMaps(std::unordered_multimap<std::string, std::string>& answer) noexcept(false) {
     const char* functionName = "createTables";
-    const int numberOfTables = 4;
 
     lua_settop(_script, 0);
     if (lua_getglobal(_script, functionName) != LUA_TFUNCTION) {
         std::cout << "Failed to find function!\n";
         return -1;
     }
-    lua_pushnumber(_script, numberOfTables);
-    if (lua_pcall(_script, 1, 1, 0) != LUA_OK) {
+    if (lua_pcall(_script, 0, 1, 0) != LUA_OK) {
         const char* luaError = lua_tostring(_script, -1);
         std::cout << "Failed to run script!\n" << luaError << '\n';
         return -1;
@@ -129,16 +105,18 @@ int Scripter::findValueFromTable(std::unordered_multimap<std::string, std::strin
     while (lua_next(_script, -2) != 0) {
         switch (lua_type(_script, -1)) {
         case LUA_TNUMBER:
-            answer.insert(std::pair<std::string, std::string>(this->getKey(), this->getStringValue()));
+            answer.insert(std::pair<std::string, std::string>(this->getStringKey(), this->getStringValue()));
             break;
         case LUA_TBOOLEAN:
-            answer.insert(std::pair<std::string, std::string>(this->getKey(), this->getStringValue()));
+            answer.insert(std::pair<std::string, std::string>(this->getStringKey(), this->getStringValue()));
             break;
         case LUA_TSTRING:
-            answer.insert(std::pair<std::string, std::string>(this->getKey(), this->getStringValue()));
+            answer.insert(std::pair<std::string, std::string>(this->getStringKey(), this->getStringValue()));
             break;
         case LUA_TTABLE:
-            this->findValueFromTable(answer);
+            if (this->findValueFromTable(answer)) {
+                return -1;
+            }
             break;
         default:
             std::cout << "Unknown userdata! Process interrupted!\n";
@@ -150,7 +128,7 @@ int Scripter::findValueFromTable(std::unordered_multimap<std::string, std::strin
     return 0;
 }
 
-std::string Scripter::getKey() noexcept {
+std::string Scripter::getStringKey() noexcept {
     switch (lua_type(_script, -2)) {
     case LUA_TNUMBER:
         return std::to_string(static_cast<int>(lua_tonumber(_script, -2)));
