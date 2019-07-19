@@ -6,7 +6,7 @@ int main() {
     Sorokin::Scripter script;
 
     /* getMaps table test */
-    const char* filename = "/home/student/lua/tabletest.lua";
+    const char* filename = "../lua/tabletest.lua";
 
     if (script.setScriptFile(filename)) {
         return -1;
@@ -27,7 +27,7 @@ int main() {
 
 
     /* getUser from SQL test */
-    const char* filename2 = "/home/student/lua/sqltest.lua";
+    const char* filename2 = "../lua/sqltest.lua";
 
     if (script.setScriptFile(filename2)) {
         return -1;
